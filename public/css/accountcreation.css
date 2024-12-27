@@ -1,0 +1,16 @@
+#accountCreation {
+    background-color: rgba(48, 48, 48, 0.596);
+    border: 1px solid rgba(117, 117, 117, 0.596);
+    height: 350px;
+    width: 560px;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+#accountCreation input {
+    width: calc(100% - 10px);
+}
+
+#accountCreation button {
+    margin: 20px 0;
+}

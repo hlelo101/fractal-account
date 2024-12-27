@@ -1,0 +1,29 @@
+{
+  "name": "fractal-account",
+  "version": "1.0.0",
+  "description": "Handle accounts for stuff, and things, and stuff, etc",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hlelo101/fractal-account.git"
+  },
+  "keywords": [],
+  "author": "@hlelo101",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hlelo101/fractal-account/issues"
+  },
+  "homepage": "https://github.com/hlelo101/fractal-account#readme",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "path": "^0.12.7",
+    "sqlite3": "^5.1.7",
+    "validator": "^13.12.0"
+  }
+}
