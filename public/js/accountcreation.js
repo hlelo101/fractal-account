@@ -18,7 +18,8 @@ function createAccount() {
     .then((response) => response.json())
     .then((data) => {
         if (data.successful) {
-            alert('Account created successfully');
+            alert('Account created successfully, you will need to then login.');
+            window.location.href = '/login';
         } else {
             alert(data.error);
         }

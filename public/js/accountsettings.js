@@ -79,7 +79,7 @@ document.getElementById('uploadProfilePictureButton').addEventListener('click', 
         body: formData,
     }).then(response => {
         if(response.status === 200) {
-            alert('Profile picture successfully updated');
+            alert('Profile picture successfully updated. You may need to refresh the page to see the changes.');
             setTimeout(updateProfilePicture, 3000);
         } else {
             alert('An error occurred while updating the profile picture');
