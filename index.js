@@ -132,6 +132,57 @@ app.get('/accountsettings', (req, res) => {
 });
 
 // Better code (The API. Well, technically the code above is also part of the API but it's... something else.)
+app.post('/deleteaccount', async (req, res) => {
+    // Get the user ID
+    const token = req.body.token;
+    const accountID = await getAccountIDFromToken(token);
+
+    if(!accountID) {
+        logError("Failed to get account ID");
+        const response = {
+            successful: false,
+            error: "Bad/missing token"
+        };
+        res.status(500).json(response);
+        return;
+    }
+
+    // Delete the account
+    db.run('DELETE FROM accounts WHERE id = ?', [accountID], (err) => {
+        if(err) {
+            logError("Failed to delete account: " + err.message);
+            const response = {
+                successful: false,
+                error: "Failed to delete account"
+            };
+            res.status(500).json(response);
+            return;
+        }
+
+        db.run('DELETE FROM tokens WHERE account_id = ?', [accountID], (err) => {
+            if(err) {
+                logError("Failed to delete tokens: " + err.message);
+                const response = {
+                    successful: false,
+                    error: "Failed to delete account"
+                };
+                res.status(500).json(response);
+                return;
+            }
+
+            const accountDir = path.join(__dirname, 'accountData', accountID.toString());
+            if(fs.existsSync(accountDir)) {
+                fs.rmSync(accountDir, { recursive: true, force: true });
+            }
+
+            const response = {
+                successful: true
+            }
+            res.json(response);
+        });
+    });
+});
+
 app.post('/getaccountid', async (req, res) => {
     if(!req.body.token) {
         logWarning("Missing required fields");

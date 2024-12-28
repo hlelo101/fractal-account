@@ -87,6 +87,25 @@ document.getElementById('uploadProfilePictureButton').addEventListener('click', 
     });
 });
 
+async function deleteAccount() {
+    const response = await (await fetch('/deleteaccount', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: getCookie('token')
+        })
+    })).json();
+
+    if(!response.successful) {
+        alert('An error occurred while deleting the account: ' + response.error);
+    } else {
+        alert('Account successfully deleted');
+        window.location.href = '/login';
+    }
+}
+
 document.getElementById('profilePictureUpload').addEventListener('change', () => {
     const file = document.getElementById('profilePictureUpload').files[0];
 
