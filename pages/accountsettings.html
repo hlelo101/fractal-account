@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Fractal Account - Settings</title>
+        <link href="css/main.css" rel="stylesheet" type="text/css">
+        <link href="css/accountsettings.css" rel="stylesheet" type="text/css">
+    </head>
+    <body>
+        <h1>Account settings</h1>
+        <div id="accountInfosBar" >
+            <p><b id="username">username</b></p>
+            <img id="profilePicture" height="50" width="50" style="border-radius: 50%;">
+        </div>
+        <div class="separator"></div>
+        <p class="smallBig">Change password:</p>
+        <input type="password" placeholder="Old password" id="changePasswordOldPassword">
+        <input type="password" placeholder="New password" id="changePasswordNewPassword"><br>
+        <button onclick="updatePassword()" style="margin-top: 10px;">Change password</button>
+        <p class="smallBig">Update profile picture:</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <label for="profilePictureUpload" id="profilePictureUploadReplacement" class="input">Choose a file</label>
+            <input type="file" id="profilePictureUpload" accept="image/*" style="display: none;">
+            <button type="button" id="uploadProfilePictureButton">Upload</button>
+        </form>
+        <p id="profilePictureUploadStatus">Select a file</p>
+    </body>
+
+    <script src="/js/accountsettings.js"></script>
+</html>

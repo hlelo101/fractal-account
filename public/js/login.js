@@ -18,7 +18,8 @@ function login() {
     .then((response) => response.json())
     .then((data) => {
         if (data.successful) {
-            alert('Login successful, token: ' + data.token);
+            document.cookie = `token=${data.token}; path=/; Secure; SameSite=Strict`;
+            alert('Login successful, token: ' + data.token + '\nThe token has been saved in the cookies.');
         } else {
             alert(data.error);
         }

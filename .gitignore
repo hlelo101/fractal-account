@@ -1,4 +1,5 @@
 node_modules/
+accountData/
 package-lock.json
 .env
 *.db

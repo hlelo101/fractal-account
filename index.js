@@ -3,15 +3,18 @@ const app = express();
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const { logInfo, logError, logWarning, logSuccess } = require('./logging.js');
-require('dotenv').config();
-const validator = require('validator');
 const crypto = require('crypto');
 const bcrypt = require('bcrypt');
-
-// TODO: Add some good fucking sanitization because right now anyone looking at this immediatly gets the urge to try a SQL injection on this fucking piece of shi-
+const cookieParser = require('cookie-parser');
+const { initAccountData, createNewAccountDataFolder, getProfilePicturePath } = require('./accontDataManagement.js');
+const fs = require('fs');
+const multer = require('multer');
+const sharp = require('sharp');
+require('dotenv').config();
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+app.use(cookieParser());
 
 function isValidToken(token) {
     return new Promise((resolve, reject) => {
@@ -39,6 +42,69 @@ function isValidToken(token) {
     });
 }
 
+function getUsernameFromToken(token) {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM tokens WHERE token = ?', [token], (err, rows) => {
+            if (err) {
+                logError("Failed to get username from token: " + err.message);
+                reject(null);
+            }
+
+            const sqlToken = rows[0];
+            if (rows.length === 0 || sqlToken === undefined) {
+                resolve(null);
+            } else {
+                db.all('SELECT * FROM accounts WHERE id = ?', [sqlToken.account_id], (err, rows) => {
+                    if(err) {
+                        logError("Failed to get account: " + err.message);
+                        reject(null);
+                    }
+
+                    const account = rows[0];
+                    resolve(account.username);
+                });
+            }
+        });
+    });
+}
+
+function getAccountIDFromToken(token) {
+    return new Promise((resolve, reject) => {
+        db.all('SELECT * FROM tokens WHERE token = ?', [token], (err, rows) => {
+            if (err) {
+                logError("Failed to get account ID from token: " + err.message);
+                reject(null);
+            }
+
+            const sqlToken = rows[0];
+
+            resolve((rows.length === 0 || sqlToken === undefined) ? null : sqlToken.account_id);
+        });
+    });
+}
+
+// Storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        getAccountIDFromToken(req.cookies.token).then(accountID => {
+            if (!accountID) {
+                return cb(new Error('Account ID is missing.'));
+            }
+
+            const accountDir = `./accountData/${accountID}`;
+            if (!fs.existsSync(accountDir)) {
+                fs.mkdirSync(accountDir, { recursive: true });
+            }
+
+            cb(null, accountDir);
+        });
+    },
+    filename: (req, file, cb) => {
+        cb(null, 'profile-temp');
+    },
+});
+const upload = multer({ storage });
+
 // Ugly code :(
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'links.html'));
@@ -56,7 +122,289 @@ app.get('/tokenchecker', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'checktoken.html'));
 });
 
-// Better code
+app.get('/accountsettings', (req, res) => {
+    if(req.cookies.token === undefined || !isValidToken(req.cookies.token)) {
+        res.redirect('/login');
+        return;
+    }
+
+    res.sendFile(path.join(__dirname, 'pages', 'accountsettings.html'));
+});
+
+// Better code (The API. Well, technically the code above is also part of the API but it's... something else.)
+app.post('/getaccountid', async (req, res) => {
+    if(!req.body.token) {
+        logWarning("Missing required fields");
+        const response = {
+            successful: false,
+            error: "Missing required fields"
+        };
+        res.json(response);
+        return;
+    }
+
+    const token = req.body.token;
+
+    if(!await isValidToken(token)) {
+        logWarning("Invalid token");
+        const response = {
+            successful: false,
+            error: "Invalid token"
+        };
+        res.json(response);
+        return;
+    }
+
+    const accountID = await getAccountIDFromToken(token);
+    if(!accountID) {
+        logError("Failed to get account ID");
+        const response = {
+            successful: false,
+            error: "Failed to get account ID"
+        };
+        res.json(response);
+        return;
+    }
+
+    logSuccess("Account ID retrieved successfully");
+    const response = {
+        successful: true,
+        accountID: accountID
+    };
+    res.json(response);
+});
+
+app.post('/uploadprofilepicture', upload.single('file'), async (req, res) => {
+    const token = req.cookies.token;
+
+    const accountID = await getAccountIDFromToken(token);
+    if(!token || !accountID) {
+        const errResponse = {
+            successful: false,
+            error: "Bad/missing token"
+        }
+        res.status(500).json(errResponse);
+        return;
+    }
+
+    try {
+        const tempFilePath = path.join(req.file.destination, req.file.filename);
+        const outputPath = path.join(req.file.destination, 'profile.png');
+
+        await sharp(tempFilePath).toFormat('png').resize(200, 200).toFile(outputPath);
+        fs.unlinkSync(tempFilePath);
+
+        const response = {
+            successful: true
+        };
+        res.json(response);
+    } catch(err) {
+        logError('Cound not update profile picture: ' + err.message);
+        const response = {
+            successful: false,
+            error: "Failed to update profile picture"
+        };
+        res.status(500).json(response);
+    }
+});
+
+app.get('/getprofile/:id', (req, res) => {
+    const id = req.params.id;
+    if(id === 'default') {
+        if(!fs.existsSync(path.join(__dirname, 'defaultData', 'profile.png'))) {
+            res.status(404).send("Profile picture not found");
+            return;
+        }
+        res.sendFile(path.join(__dirname, 'defaultData', 'profile.png'));
+        return;
+    }
+
+    if(!fs.existsSync(path.join(__dirname, 'accountData', id, 'profile.png'))) {
+        // Send the default profile picture by... default
+        if(!fs.existsSync(path.join(__dirname, 'defaultData', 'profile.png'))) {
+            res.status(404).send("Profile picture not found");
+            return;
+        }
+        res.sendFile(path.join(__dirname, 'defaultData', 'profile.png'));
+        return;
+    }
+    res.sendFile(path.join(__dirname, 'accountData', id, 'profile.png'));
+});
+
+app.post('/getprofilepicturelink', async (req, res) => {
+    if(!req.body.token) {
+        logWarning("Missing required fields");
+        const response = {
+            successful: false,
+            error: "Missing required fields"
+        };
+        res.status(500).json(response);
+        return;
+    }
+
+    if(!isValidToken(req.body.token)) {
+        logWarning("Invalid token");
+        const response = {
+            successful: false,
+            error: "Invalid token"
+        };
+        res.status(500).json(response);
+        return;
+    }
+
+    const id = await getAccountIDFromToken(req.body.token);
+    if(!id) {
+        logError("Failed to get account ID");
+        const response = {
+            successful: false,
+            error: "Failed to get profile picture link"
+        };
+        res.status(500).json(response);
+        return;
+    }
+
+    const profilePicturePath = getProfilePicturePath(id);
+    if(!profilePicturePath) {
+        logError("Failed to get profile picture link");
+        const response = {
+            successful: false,
+            error: "Failed to get profile picture link"
+        };
+        res.status(500).json(response);
+        return;
+    }
+
+    const response = {
+        successful: true,
+        link: profilePicturePath
+    };
+    res.json(response);
+});
+
+app.post('/getusername', async (req, res) => {
+    if(!req.body.token) {
+        logWarning("Missing required fields");
+        const response = {
+            successful: false,
+            error: "Missing required fields"
+        };
+        res.json(response);
+        return;
+    }
+    const token = req.body.token;
+
+    if(!await isValidToken(token)) {
+        logWarning("Invalid token");
+        const response = {
+            successful: false,
+            error: "Invalid token"
+        };
+        res.json(response);
+        return;
+    }
+
+    const username = await getUsernameFromToken(token);
+    if(!username) {
+        logError("Failed to get username");
+        const response = {
+            successful: false,
+            error: "Failed to get username"
+        };
+        res.json(response);
+        return;
+    }
+
+    logSuccess("Username retrieved successfully");
+    const response = {
+        successful: true,
+        username: username
+    };
+    res.json(response);
+});
+
+app.post('/updatepassword', (req, res) => {
+    if (!req.body.oldPassword || !req.body.newPassword || !req.body.token) {
+        logWarning("Missing required fields");
+        const response = {
+            successful: false,
+            error: "Missing required fields"
+        };
+        res.json(response);
+        return;
+    }
+
+    const oldPassword = req.body.oldPassword;
+    const newPassword = req.body.newPassword;
+    const token = req.body.token;
+
+    if(!isValidToken(token)) {
+        logWarning("Invalid token");
+        const response = {
+            successful: false,
+            error: "Invalid token"
+        };
+        res.json(response);
+        return;
+    }
+
+    db.all('SELECT * FROM tokens WHERE token = ?', [token], (err, rows) => {
+        if(err) {
+            logError("Failed to get token: " + err.message);
+            const response = {
+                successful: false,
+                error: "Failed to update password"
+            };
+            res.json(response);
+            return;
+        }
+
+        const sqlToken = rows[0];
+        db.all('SELECT * FROM accounts WHERE id = ?', [sqlToken.account_id], (err, rows) => {
+            if(err) {
+                logError("Failed to get account: " + err.message);
+                const response = {
+                    successful: false,
+                    error: "Failed to update password"
+                };
+                res.json(response);
+                return;
+            }
+
+            const account = rows[0];
+            if(!(bcrypt.compareSync(oldPassword + account.salt, account.password))) {
+                logWarning("Incorrect old password");
+                const response = {
+                    successful: false,
+                    error: "Incorrect old password"
+                };
+                res.json(response);
+                return;
+            }
+
+            const salt = crypto.randomBytes(16).toString('hex');
+            const hashedPassword = bcrypt.hashSync(newPassword + salt, 10);
+
+            db.run('UPDATE accounts SET password = ?, salt = ? WHERE id = ?', [hashedPassword, salt, account.id], (err) => {
+                if(err) {
+                    logError("Failed to update password: " + err.message);
+                    const response = {
+                        successful: false,
+                        error: "Failed to update password"
+                    };
+                    res.json(response);
+                    return;
+                }
+
+                logSuccess("Password updated successfully");
+                const response = {
+                    successful: true
+                };
+                res.json(response);
+            });
+        });
+    });
+});
+
 app.post('/checktoken', async (req, res) => {
     const token = req.body.token;
 
@@ -183,17 +531,31 @@ app.post('/register', (req, res) => {
                     return;
                 }
 
-                logSuccess("Account created successfully");
-                const response = {
-                    successful: true
-                };
-                res.json(response);
+                db.all('SELECT * FROM accounts WHERE username = ?', [username], (err, rows) => {
+                    if(err) {
+                        logError("Failed to get account: " + err.message);
+                        const response = {
+                            successful: false,
+                            error: "Failed to create account"
+                        };
+                        res.json(response);
+                        return;
+                    }
+
+                    createNewAccountDataFolder(rows[0].id);
+                    logSuccess("Account created successfully");
+                    const response = {
+                        successful: true
+                    };
+                    res.json(response);
+                });
             });
         }
     });
 });
 
 // Initialization
+// Oh and the storage is on the top of the file
 logInfo("Server started");
 const db = new sqlite3.Database(path.join(__dirname, 'accounts.db'), (err) => {
     if (err) {
@@ -212,6 +574,7 @@ const db = new sqlite3.Database(path.join(__dirname, 'accounts.db'), (err) => {
             process.exit(1);
         }
 
+        initAccountData(db);
         db.run(`CREATE TABLE IF NOT EXISTS tokens (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             token TEXT NOT NULL,

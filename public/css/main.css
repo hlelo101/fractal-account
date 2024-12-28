@@ -9,7 +9,7 @@ a {
     color: white;
 }
 
-input {
+input, .input {
     background-color: rgba(48, 48, 48, 0.596);
     border: 1px solid rgba(117, 117, 117, 0.596);
     color: white;
@@ -30,4 +30,10 @@ button {
 button:hover {
     background-color: rgba(90, 90, 90, 0.596);
     border: 1px solid rgba(104, 104, 104, 0.596);
+}
+
+.separator {
+    background-color: white;
+    height: 2px;
+    width: 400px;
 }
