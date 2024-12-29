@@ -141,6 +141,12 @@ fetch('/register', {
 ```
 Note that this endpoint doesn't return a token, you will have to then login to get it.
 
+**/getusername/USER_ID**\
+Gets the username from a user ID. Example usage:
+```js
+fetch('/getusername/USER_ID');
+```
+
 If you want to see how these endpoints can be used, you can view the web interface's JavaScript source code (in `./public/js/`).
 # The web interface
 The web interface is pretty basic and doesn't do much. With it, you can login, register a new account, check if a token is valid and change its settings.

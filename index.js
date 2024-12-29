@@ -259,6 +259,46 @@ app.post('/uploadprofilepicture', upload.single('file'), async (req, res) => {
     }
 });
 
+app.get('/getusername/:id', (req, res) => {
+    if(!req.params.id) {
+        logWarning("Missing required fields");
+        const errResponse = {
+            successful: false,
+            error: "Missing required fields"
+        }
+        res.status(500).json(errResponse);
+        return;
+    }
+    
+    db.all('SELECT * FROM accounts WHERE id = ?', [req.params.id], (err, rows) => {
+        if(err) {
+            logError("Failed to get username: " + err.message);
+            const response = {
+                successful: false,
+                error: "Failed to get username"
+            };
+            res.status(500).json(response);
+            return;
+        }
+
+        if(rows.length === 0) {
+            logWarning("Account not found for ID: " + req.params.id);
+            const response = {
+                successful: false,
+                error: "Account not found"
+            };
+            res.status(500).json(response);
+            return;
+        }
+
+        const response = {
+            successful: true,
+            username: rows[0].username
+        };
+        res.json(response);
+    });
+});
+
 app.get('/getprofile/:id', (req, res) => {
     const id = req.params.id;
     if(id === 'default') {
