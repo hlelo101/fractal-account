@@ -10,11 +10,13 @@ const { initAccountData, createNewAccountDataFolder, getProfilePicturePath } = r
 const fs = require('fs');
 const multer = require('multer');
 const sharp = require('sharp');
+const cors = require('cors');
 require('dotenv').config();
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors());
 
 function isValidToken(token) {
     return new Promise((resolve, reject) => {
