@@ -190,3 +190,6 @@ You can register a new account in `/createaccount`.
 
 By default, `/` returns a list of every links.\
 ![Links](screenshots/links.png)
+
+# Additional notes
+A logo can be found on the bottom left of vIDs. Feel free to change it if you wish by modifying `./public/assets/vid-logo.png`!
