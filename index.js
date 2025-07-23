@@ -11,6 +11,7 @@ const fs = require('fs');
 const multer = require('multer');
 const sharp = require('sharp');
 const cors = require('cors');
+const { genvID } = require('./vid.js');
 require('dotenv').config();
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -324,6 +325,64 @@ app.get('/getprofile/:id', (req, res) => {
     res.sendFile(path.join(__dirname, 'accountData', id, 'profile.png'));
 });
 
+app.get('/vid/:id', (req, res) => {
+    const id = req.params.id;
+    db.all('SELECT * FROM accounts WHERE id = ?', [id], (err, rows) => {
+        if(rows.length === 0) {
+            res.status(500).json({ successful: false, error: 'Account not found.' });
+            return;
+        }
+
+        res.send(genvID(id, `/getprofile/${id}`, rows[0].username, rows[0].color, rows[0].joindate));
+    });
+});
+
+function hexColorToInt(hex) {
+    try {
+        if (typeof hex !== 'string' || !/^#?[0-9a-fA-F]{6}$/.test(hex)) {
+            throw new Error('Invalid hex color');
+        }
+        const cleanHex = hex.replace('#', '');
+        return parseInt(cleanHex, 16);
+    } catch(e) {
+        logError(e);
+        return null;
+    }
+}
+app.post('/updatevidcolor', async (req, res) => {
+    if(!req.body.token || !req.body.color) {
+        res.status(500).json({ successful: false, error: 'Missing required fields.' });
+        return;
+    }
+    const color = hexColorToInt(req.body.color);
+    if(!color) {
+        res.status(500).json({ successful: false, error: 'Invalid color.' });
+        return;
+    }
+    if(!isValidToken(req.body.token)) {
+        res.status(500).json({ successful: false, error: 'Invalid token.' });
+        return;
+    }
+    const id = await getAccountIDFromToken(req.body.token);
+    if(!id) {
+        logError('Failed to get account ID.');
+        res.status(500).json({ successful: false, error: 'Failed to get account ID.' });
+        return;
+    }
+    db.run('UPDATE accounts SET color = ? WHERE id = ?', [color, id], function(err) {
+        if(err) {
+            res.status(500).json({ successful: false, error: 'SQL error.' });
+            return;
+        }
+        if(this.changes === 0) {
+            res.status(500).json({ successful: false, error: 'User not found.' });
+            return;
+        }
+
+        res.json({ successful: true });
+    })
+});
+
 app.post('/getprofilepicturelink', async (req, res) => {
     if(!req.body.token) {
         logWarning("Missing required fields");
@@ -613,7 +672,8 @@ app.post('/register', (req, res) => {
             const salt = crypto.randomBytes(16).toString('hex');
             const hashedPassword = bcrypt.hashSync(password + salt, 10);
         
-            db.run('INSERT INTO accounts (username, password, salt) VALUES (?, ?, ?)', [username, hashedPassword, salt], (err) => {
+            db.run('INSERT INTO accounts (username, password, salt, color, joindate) VALUES (?, ?, ?, ?, ?)', [username, hashedPassword, salt,
+                   0x9e5139, new Date().toUTCString().split(' ').slice(0, 4).join(' ')], (err) => {
                 if (err) {
                     logError("Failed to create account: " + err.message);
                     const response = {
@@ -660,7 +720,9 @@ const db = new sqlite3.Database(path.join(__dirname, 'accounts.db'), (err) => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT NOT NULL,
         password TEXT NOT NULL,
-        salt TEXT NOT NULL
+        salt TEXT NOT NULL,
+        color INTEGER NOT NULL,
+        joindate TEXT NOT NULL
     )`, (err) => {
         if(err) {
             logError("Failed to create accounts table: " + err.message);

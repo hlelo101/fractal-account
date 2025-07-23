@@ -87,6 +87,41 @@ document.getElementById('uploadProfilePictureButton').addEventListener('click', 
     });
 });
 
+document.getElementById('vIDNewColor').addEventListener('change', () => {
+    const color = document.getElementById('vIDNewColor').value;
+    console.log('New color: ', color);
+    fetch('/updatevidcolor', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: getCookie('token'),
+            'color': color
+        })
+    }).then(async response => {
+        const json = await response.json();
+        if(response.status !== 200) {
+            alert(`An error occurred while updateing the vID color: ${json.error}`);
+        }
+    })
+});
+
+const vidContainer = document.getElementById('vidContainer');
+document.getElementById('profilePicture').addEventListener('click', (e) => {
+    e.stopPropagation();
+    vidContainer.style.display = vidContainer.style.display === 'flex' ? 'none' : 'flex';
+});
+vidContainer.addEventListener('click', (e) => {
+    e.stopPropagation();
+});
+
+document.addEventListener('click', () => {
+    if(vidContainer.style.display === 'flex') {
+        vidContainer.style.display = 'none';
+    }
+});
+
 async function deleteAccount() {
     const response = await (await fetch('/deleteaccount', {
         method: 'POST',
@@ -106,6 +141,26 @@ async function deleteAccount() {
     }
 }
 
+async function setvIDPath() {
+    document.getElementById('vidContainer').style.display = 'none';
+
+    const res = await (await fetch('/getaccountid', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            token: getCookie('token')  
+        })
+    })).json();
+    if(!res.successful) {
+        console.error('Could not get vID: ', res.error);
+        document.getElementById('vID').innerHTML = '<p>Could not get vID.</p>'
+        return;
+    }
+    document.getElementById('vID').src = `/vid/${res.accountID}`;
+}
+
 document.getElementById('profilePictureUpload').addEventListener('change', () => {
     const file = document.getElementById('profilePictureUpload').files[0];
 
@@ -114,3 +169,4 @@ document.getElementById('profilePictureUpload').addEventListener('change', () =>
 
 setUsername();
 updateProfilePicture();
+setvIDPath();

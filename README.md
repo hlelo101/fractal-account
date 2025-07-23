@@ -111,6 +111,22 @@ fetch('/checktoken', {
     })
 });
 ```
+**/updatevidcolor**\
+Update the background color of the virtual ID.\
+Note that the color field must be a string representing a hex color, for example `#5e7317`. \
+Example usage:
+```js
+fetch('/updatevidcolor', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+        'token': USER_TOKEN,
+        'color': NEW_COLOR
+    }),
+});
+```
 **/login**\
 Gives an account token from an username and password, valid for 1 hour. Example usage:
 ```js
@@ -145,6 +161,11 @@ Note that this endpoint doesn't return a token, you will have to then login to g
 Gets the username from a user ID. Example usage:
 ```js
 fetch('/getusername/USER_ID');
+```
+**/vid/USER_ID**\
+Gets the vID from a user ID. Example usage:
+```html
+<iframe src='/vid/USER_ID' style='height: 250px; width: 400px;'></iframe>
 ```
 
 If you want to see how these endpoints can be used, you can view the web interface's JavaScript source code (in `./public/js/`).

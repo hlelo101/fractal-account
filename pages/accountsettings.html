@@ -4,12 +4,18 @@
         <title>Fractal Account - Settings</title>
         <link href="css/main.css" rel="stylesheet" type="text/css">
         <link href="css/accountsettings.css" rel="stylesheet" type="text/css">
+ 
+        <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/site.webmanifest" />
     </head>
     <body>
         <h1>Account settings</h1>
         <div id="accountInfosBar" >
-            <p><b id="username">username</b></p>
-            <img id="profilePicture" height="50" width="50" style="border-radius: 50%;">
+            <p style="margin-right: 0;"><b id="username">username</b></p>
+            <img id="profilePicture" height="50" width="50" style="border-radius: 50%; cursor: pointer;">
         </div>
         <div class="separator"></div>
         <p class="smallBig">Change password:</p>
@@ -23,8 +29,15 @@
             <button type="button" id="uploadProfilePictureButton">Upload</button>
         </form>
         <p id="profilePictureUploadStatus">Select a file</p>
+        <p class="smallBig">Change virtual ID color:</p>
+        <input type="color" name="vID color" id="vIDNewColor" style="height: 20px; width: 50px;">
+        <label for="color">Select a color</label>
         <p class="smallBig">Delete account:</p>
         <button onclick="deleteAccount()">Delete account</button>
+
+        <div id="vidContainer">
+            <iframe id='vID'></iframe>
+        </div>
     </body>
 
     <script src="/js/accountsettings.js"></script>

@@ -1,3 +1,9 @@
+iframe {
+    border: 0px solid black;
+    height: 250px;
+    width: 400px;
+}
+
 .smallBig {
     font-size: 1.3em;
     font-weight: bold;
@@ -15,4 +21,19 @@
 
 #accountInfosBar * {
     margin: 10px;
+}
+
+#vidContainer {
+    background-color: #7f439c;
+    border: 1px solid #9060a6;
+    border-radius: 10px;
+    width: 410px;
+    height: 260px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 80px;
+    right: 10px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.30);
 }
