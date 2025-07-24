@@ -340,14 +340,24 @@ app.get('/vid/:id', (req, res) => {
 
 // Fancy scheiße (I'm not even German, I just love that word)
 app.get('/vidpng/:id', async (req, res) => {
-    const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-    await page.goto(`http://localhost:${process.env.PORT}/vid/${req.params.id}`, { waitUntil: 'networkidle0' });
-    const element = await page.$('#vid-background');
-    const ss = await element.screenshot({ type: 'png' });
+    db.all('SELECT * FROM accounts WHERE id = ?', [req.params.id], async (err, rows) => {
+        if(rows.length === 0) {
+            res.status(500).json({ successful: false, error: 'Account not found.' });
+            return;
+        }
+        try {
+            const browser = await puppeteer.launch();
+            const page = await browser.newPage();
+            await page.goto(`http://localhost:${process.env.PORT}/vid/${req.params.id}`, { waitUntil: 'networkidle0' });
+            const element = await page.$('#vid-background');
+            const ss = await element.screenshot({ type: 'png' });
 
-    res.set('Content-Type', 'image/png');
-    res.send(ss);
+            res.set('Content-Type', 'image/png');
+            res.send(ss);
+        } catch(e) {
+            res.status(500).json({ successful: false, error: `Error: ${e}` });
+        }
+    });
 });
 
 function hexColorToInt(hex) {

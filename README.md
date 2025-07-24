@@ -167,6 +167,11 @@ Gets the vID from a user ID. Example usage:
 ```html
 <iframe src='/vid/USER_ID' style='height: 250px; width: 400px;'></iframe>
 ```
+**/vidpng/USER_ID**\
+Returns a rendered PNG of `/vid/USER_ID`. Example usage:
+```html
+<img src='/vidpng/USER_ID'></img>
+```
 
 If you want to see how these endpoints can be used, you can view the web interface's JavaScript source code (in `./public/js/`).
 # The web interface
