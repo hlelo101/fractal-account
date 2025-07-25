@@ -1,100 +1,113 @@
 <!DOCTYPE html>
 <html>
-    <style>
-        body {
-            font-family: Arial;
-            color: rgba(255, 255, 255, 0.90);
-        }
-        h1 {
-            font-size: 1.3em;
-            color: rgba(255, 255, 255, 0.80);
-        }
-        #vid-background {
-            background-color: {{color}};
-            width: 340px;
-            height: 200px;
-            border-radius: 10px;
-            padding: 15px 20px;
-            border: 2px solid {{color-brighter}};
-            overflow: hidden;
-            background-image: url('/assets/vid-background.png');
-            position: relative;
-        }
-        #profile-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 14px;
-        }
-        #id {
-            color: rgba(211, 211, 211, 0.60);
-            font-size: 0.8em;
-        }
-        #username-id * {
-            margin: 3px;
-            margin-left: 10px;
-        }
-        #user-info {
-            display: flex;
-            flex-direction: row;
-        }
-        #vid-logo {
-            width: 120px;
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-        }
-        #smartcard-container {
-            position: absolute;
-            right: 0;
-            bottom: 0;
-            height: 100%;
-            display: flex;
-            align-items: center;
-        }
-        #vid-smartcard {
-            height: 45px;
-            margin-right: 40px;
-        }
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%) skewX(-20deg);
-                opacity: 0;
-            }
-            10% {
-                opacity: 1;
-            }
-            20% {
-                transform: translateX(800%) skewX(-20deg);
-                opacity: 1;
-            }
-            34%, 100% {
-                transform: translateX(800%) skewX(-20deg);
-                opacity: 0;
-            }
-        }
-        #shimmer {
-            position: absolute;
-            top: 0;
-            left: -60px;
-            height: 100%;
-            width: 60px;
-            background: linear-gradient(
-                120deg,
-                rgba(255, 255, 255, 0) 0%,
-                rgba(255, 255, 255, 0.4) 50%,
-                rgba(255, 255, 255, 0) 100%
-            );
-            transform: skewX(-20deg);
-            animation: shimmer 7.5s infinite;
-            pointer-events: none;
-            filter: blur(8px);
-        }
-    </style>
     <head>
+        <style>
+            body {
+                font-family: Arial;
+                color: {{text-color-main}};
+            }
+            h1 {
+                font-size: 1.3em;
+                color: {{text-color-h1}};
+            }
+            body * {
+                z-index: 1;
+            }
+            #vid-background {
+                background-color: {{color}};
+                width: 340px;
+                height: 200px;
+                border-radius: 10px;
+                padding: 15px 20px;
+                border: 2px solid {{color-brighter}};
+                overflow: hidden;
+                position: relative;
+            }
+            #background-image {
+                background-image: url('/assets/vid-background.png');
+                height: 100%;
+                width: 100%;
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 0;
+                {{invert}}
+            }
+            #profile-img {
+                width: 50px;
+                height: 50px;
+                border-radius: 14px;
+            }
+            #id {
+                color: {{text-color-id}};
+                font-size: 0.8em;
+            }
+            #username-id * {
+                margin: 3px;
+                margin-left: 10px;
+            }
+            #user-info {
+                display: flex;
+                flex-direction: row;
+            }
+            #vid-logo {
+                width: 120px;
+                position: absolute;
+                bottom: 10px;
+                left: 10px;
+            }
+            #smartcard-container {
+                position: absolute;
+                right: 0;
+                bottom: 0;
+                height: 100%;
+                display: flex;
+                align-items: center;
+            }
+            #vid-smartcard {
+                height: 45px;
+                margin-right: 40px;
+            }
+            @keyframes shimmer {
+                0% {
+                    transform: translateX(-100%) skewX(-20deg);
+                    opacity: 0;
+                }
+                10% {
+                    opacity: 1;
+                }
+                20% {
+                    transform: translateX(800%) skewX(-20deg);
+                    opacity: 1;
+                }
+                34%, 100% {
+                    transform: translateX(800%) skewX(-20deg);
+                    opacity: 0;
+                }
+            }
+            #shimmer {
+                position: absolute;
+                top: 0;
+                left: -60px;
+                height: 100%;
+                width: 60px;
+                background: linear-gradient(
+                    120deg,
+                    rgba(255, 255, 255, 0) 0%,
+                    rgba(255, 255, 255, 0.4) 50%,
+                    rgba(255, 255, 255, 0) 100%
+                );
+                transform: skewX(-20deg);
+                animation: shimmer 7.5s infinite;
+                pointer-events: none;
+                filter: blur(8px);
+            }
+        </style>
         <title>Virtual ID of {{username}}</title>
     </head>
     <body>
         <div id='vid-background'>
+            <div id='background-image'></div>
             <div id='user-info'>
                 <img src='{{profile}}' id='profile-img'>
                 <div id='username-id'>
@@ -104,7 +117,7 @@
             </div>
             <p style='font-size: 0.8em;'><b>Joined:</b> {{date}}</p>
             <p style='position: absolute; bottom: 0; right: 15px; font-size: 0.7em'>Fractal vID</p>
-            <img id='vid-logo' src='/assets/vid-logo.png'>
+            <img id='vid-logo' src='/assets/vid-logo.png' style='{{invert}}'>
             <div id='smartcard-container'>
                 <img id='vid-smartcard' src='/assets/smartcard.png'>
             </div>
